@@ -2,6 +2,7 @@ using mongodb_dotnet_example.Models;
 using mongodb_dotnet_example.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using MongoDB.Bson;
 
 namespace mongodb_dotnet_example.Controllers
 {
@@ -34,11 +35,11 @@ namespace mongodb_dotnet_example.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Game> Create(Game game)
+        public ActionResult<GameInput> Create(GameInput gameI)
         {
-            _gameService.Create(game);
-
-            return CreatedAtRoute("GetGame", new { id = game.Id.ToString() }, game);
+            _gameService.Create(gameI);
+            var data =CreatedAtRoute("GetGame", new { id = ObjectId.GenerateNewId().ToString() }, gameI);
+            return Ok(data);
         }
 
         [HttpPut("{id:length(24)}")]
