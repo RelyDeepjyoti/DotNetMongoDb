@@ -30,16 +30,12 @@ namespace mongodb_dotnet_example.Services
             _gamesI.InsertOne(gameI);
             return gameI;
         }
-        //public Game Create(Game game)
-        //{
-        //    if (string.IsNullOrWhiteSpace(game.Id))
-        //    {
-        //        game.Id = ObjectId.GenerateNewId().ToString();
-        //    }
-        //    _games.InsertOne(game);
-        //    return game;
-        //}
-        public void Update(string id, Game updatedGame) => _games.ReplaceOne(game => game.Id == id, updatedGame);
+
+        public Game Update(string id, Game updatedGame)
+        {
+            _games.ReplaceOne(game => game.Id == id, updatedGame);
+            return _games.Find(game => game.Id == id).FirstOrDefault();
+        }                                                                                                                                 
 
         public void Delete(Game gameForDeletion) => _games.DeleteOne(game => game.Id == gameForDeletion.Id);
 

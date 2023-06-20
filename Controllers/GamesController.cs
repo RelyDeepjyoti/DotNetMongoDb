@@ -38,12 +38,12 @@ namespace mongodb_dotnet_example.Controllers
         public ActionResult<GameInput> Create(GameInput gameI)
         {
             _gameService.Create(gameI);
-            var data =CreatedAtRoute("GetGame", new { id = ObjectId.GenerateNewId().ToString() }, gameI);
-            return Ok(data);
+            return CreatedAtRoute("GetGame", new { id = ObjectId.GenerateNewId().ToString() }, gameI);
+            //return Ok(data);
         }
 
         [HttpPut("{id:length(24)}")]
-        public IActionResult Update(string id, Game gameIn)
+        public ActionResult<Game> Update(string id, Game gameIn)
         {
             var game = _gameService.Get(id);
 
@@ -52,9 +52,9 @@ namespace mongodb_dotnet_example.Controllers
                 return NotFound();
             }
 
-            _gameService.Update(id, gameIn);
+            return _gameService.Update(id, gameIn);
 
-            return NoContent();
+            //return NoContent();
         }
 
         [HttpDelete("{id:length(24)}")]
