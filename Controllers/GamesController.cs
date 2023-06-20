@@ -40,6 +40,7 @@ namespace mongodb_dotnet_example.Controllers
             _gameService.Create(gameI);
             return CreatedAtRoute("GetGame", new { id = ObjectId.GenerateNewId().ToString() }, gameI);
             //return Ok(data);
+            //newww Push
         }
 
         [HttpPut("{id:length(24)}")]
