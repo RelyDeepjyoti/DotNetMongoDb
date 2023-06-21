@@ -8,6 +8,13 @@ using System.Security.Claims;
 using System.Text;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using MongoDB.Bson;
+using System.IO;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+//using Newtonsoft.Json;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -68,10 +75,10 @@ public class UsersController : ControllerBase
         // Create an object containing user data and token
         var response = new
         {
-            Token = token,
+            token,
             User = new
             {
-                Email = user.Email,
+               user.Email, 
             }
         };
 
@@ -137,8 +144,7 @@ public class UsersController : ControllerBase
         var profileData = new
         {
              user.Email,
-            user.Id,
-
+             user.Id,
         };
 
         return Ok(profileData);
@@ -147,7 +153,6 @@ public class UsersController : ControllerBase
     private bool ValidateToken(string token, out string userId)
     {
         userId = null;
-
         // Generate the secret key using SecretKeyGenerator.GenerateSecretKey() method
         //string secretKey = SecretKeyGenerator.GenerateSecretKey();
         string secretKey = _appSettings.Value.JwtSecretKey;
@@ -161,14 +166,12 @@ public class UsersController : ControllerBase
             ValidateIssuerSigningKey = true,
             ValidateLifetime = true
         };
-
         try
         {
             // Validate and extract the user ID from the token
             var tokenHandler = new JwtSecurityTokenHandler();
             var claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
             userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier).Value;
-
             return true;
         }
         catch
@@ -176,5 +179,93 @@ public class UsersController : ControllerBase
             return false;
         }
     }
+    [HttpPost("likes")]
+    public async Task<IActionResult> CreateLike()
+    {
+        // Retrieve the token from the request header
+        string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
+        // Validate the token and retrieve the user ID
+        if (!ValidateToken(token, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+        {
+            // Read the request body asynchronously
+            string requestBodyJson = await reader.ReadToEndAsync();
+
+            // Deserialize the request body JSON to get the postId
+            dynamic requestBody = JsonConvert.DeserializeObject(requestBodyJson);
+            string postId = requestBody.postId;
+
+            // Create a new Like object with the provided data
+            var like = new Like
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                PostId = postId,
+                Posted = DateTime.UtcNow,
+                IsLike = true
+            };
+
+            // Save the like to the database
+            _userService.CreateLikeForUser(userId, like);
+
+            return Ok("Like created successfully");
+        }
+    }
+
+
+    [HttpGet("likes")]
+    public IActionResult GetLikes()
+    {
+        string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+        if (!ValidateToken(token, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = _userService.GetById(userId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        var profileData = new
+        {
+            
+            user.Email,
+            user.Id,
+            user.Likes 
+        };
+
+        return Ok(profileData);
+    }
+    [HttpPost("likesUpdate")]
+    public   IActionResult UpdateLike(string likeId)
+    {
+        // Retrieve the token from the request header
+        string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+        // Validate the token and retrieve the user ID
+        if (!ValidateToken(token, out var userId))
+        {
+            return Unauthorized();
+        } 
+            var like = new Like
+            {
+                Id = likeId,
+                //PostId = postId,
+                Posted = DateTime.UtcNow,
+                IsLike = false // set to false
+            };
+        Console.WriteLine($"likeId {likeId}");
+        // Update the like in the database
+        _userService.UpdateLikeForUser(userId, like);
+
+            return Ok(like);
+    }
 }

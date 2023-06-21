@@ -7,11 +7,11 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MongoDB.Bson;
 
 public class UserService
 {
     private readonly IMongoCollection<User> _users;
-
     public UserService(IGamesDatabaseSettings settings)
     {
         //_users = database.GetCollection<User>("Users");
@@ -52,8 +52,31 @@ public class UserService
     public User GetById(string userId)
     {
         var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
+        //Find(game => game.Id == id).FirstOrDefault()
         return _users.Find(filter).FirstOrDefault();
     }
+    public void CreateLikeForUser(string userId, Like like)
+    {
+        var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
+        var update = Builders<User>.Update.Push(u => u.Likes, like);
+        _users.UpdateOne(filter, update);
+    }
+    public void UpdateLikeForUser(string userId, Like like)
+    {
+        var filter = Builders<User>.Filter.And(
+            Builders<User>.Filter.Eq("Id", userId),
+            Builders<User>.Filter.Eq("Likes.Id", like.Id)
+        );
 
+        var update = Builders<User>.Update
+            .Set("Likes.$.Posted", like.Posted)
+            .Set("Likes.$.IsLike", like.IsLike);
+
+        try {
+            _users.UpdateOne(filter, update);
+        }catch (Exception e) {
+            Console.WriteLine(e.Message);
+        }
+    }
 
 }
