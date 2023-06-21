@@ -13,4 +13,5 @@ namespace mongodb_dotnet_example.Models
         string ConnectionString { get; set; }
         string DatabaseName { get; set; }
     }
+
 }

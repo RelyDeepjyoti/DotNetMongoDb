@@ -33,12 +33,17 @@ namespace mongodb_dotnet_example
 
             services.AddSingleton<IGamesDatabaseSettings>(sp => sp.GetRequiredService<IOptions<GamesDatabaseSettings>>().Value);
 
+            services.Configure<AppSettings>(Configuration.GetSection(nameof(AppSettings)));
+
+            services.AddSingleton<IAppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+
             services.AddSingleton<GamesService>();
+            services.AddSingleton<UserService>();
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "mongodb_dotnet_example", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "DotNetMongodb", Version = "v1" });
             });
         }
 
