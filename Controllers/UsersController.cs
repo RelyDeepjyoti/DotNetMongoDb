@@ -14,6 +14,8 @@ using MongoDB.Bson;
 using System.IO;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using MongoDB.Driver;
 //using Newtonsoft.Json;
 
 [Route("api/[controller]")]
@@ -54,7 +56,6 @@ public class UsersController : ControllerBase
             Message = "Registration successful",
             model.Email
         };
-
         return Ok(response);
     }
     [HttpPost("login")]
@@ -244,7 +245,7 @@ public class UsersController : ControllerBase
 
         return Ok(profileData);
     }
-    [HttpPost("likesUpdate")]
+    [HttpPut("likesUpdate")]
     public   IActionResult UpdateLike(string likeId)
     {
         // Retrieve the token from the request header
@@ -264,8 +265,48 @@ public class UsersController : ControllerBase
             };
         Console.WriteLine($"likeId {likeId}");
         // Update the like in the database
-        _userService.UpdateLikeForUser(userId, like);
+        _userService.UpdateLikeForUser(userId, like,false);
 
             return Ok(like);
+    }
+    [HttpDelete("likesUpdate/{likeId}")]
+    public IActionResult DeleteLike([FromRoute]  string likeId)
+    {
+        // Retrieve the token from the request header
+        string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+        // Validate the token and retrieve the user ID
+        if (!ValidateToken(token, out var userId))
+        {
+            return Unauthorized();
+        }
+        var like = new Like
+        {
+            Id = likeId,
+            //PostId = postId,
+            Posted = DateTime.UtcNow,
+            IsLike = false // set to false
+        };
+        Console.WriteLine($"likeId {likeId}");
+        // Update the like in the database
+        _userService.UpdateLikeForUser(userId, like, true);
+
+        return Ok(like);
+    }
+    [HttpGet("users")]
+    public IActionResult GetAllUsers(int page = 1, int pageSize = 10, string sortBy = "id", bool isDescending = false)
+    { 
+        // Get all users from the database
+        var users = _userService.GetAllUsers(page, pageSize,sortBy,isDescending);
+
+        return Ok(users);
+    }
+    [HttpGet("users/index")]
+    public IActionResult GetAllUsersIndex(int page = 1, int pageSize = 10, string sortBy = "id", bool isDescending = false)
+    {
+        // Get all users from the database
+        var users = _userService.GetAllUsersByIndex(page, pageSize, sortBy, isDescending);
+
+        return Ok(users);
     }
 }

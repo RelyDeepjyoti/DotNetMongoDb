@@ -19,3 +19,12 @@ public class User
         Likes = new List<Like>();
     }
 }
+
+public class UserList
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
+
+    public string Email { get; set; } 
+}
